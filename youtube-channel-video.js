@@ -1,8 +1,8 @@
 const rp = require('request-promise');
 const fs = require('fs');
 const ytdl = require('youtube-dl');
-
 const API_KEY = require('./api-key');
+
 const API_URL = 'https://www.googleapis.com/youtube/v3';
 const VIDEO_URL = 'https://www.youtube.com/watch?v=';
 
