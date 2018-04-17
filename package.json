@@ -1,0 +1,21 @@
+{
+  "name": "youtube-channel-video",
+  "main": "./youtube-channel-video.js",
+  "version": "0.1.0",
+  "description": "Script to download all video from a Youtube channel",
+  "repository": "https://github.com/jacqueslorentz/youtube-channel-video",
+  "license": "MIT",
+  "scripts": {
+    "eslint": "./node_modules/.bin/eslint youtube-channel-video.js"
+  },
+  "dependencies": {
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2",
+    "youtube-dl": "^1.12.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.11.0"
+  }
+}
