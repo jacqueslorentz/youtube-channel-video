@@ -1,7 +1,8 @@
 const rp = require('request-promise');
 const fs = require('fs');
-const ytdl = require('youtube-dl');
+const ytdl = require('ytdl-core');
 const API_KEY = require('./api-key');
+const { spawn } = require('child_process');
 
 const API_URL = 'https://www.googleapis.com/youtube/v3';
 const VIDEO_URL = 'https://www.youtube.com/watch?v=';
@@ -53,7 +54,8 @@ const searchChannel = (channel, isUsername) => new Promise((resolve) => {
     });
 });
 
-const getDisplaySize = (size, i) => {
+const getDisplaySize = (size, index) => {
+    const i = index || 0;
     const suffixes = ['B', 'KB', 'MB', 'GB'];
 
     if (size < (i + 1) * 1024) {
@@ -62,19 +64,48 @@ const getDisplaySize = (size, i) => {
     return getDisplaySize(size / 1024, i + 1);
 };
 
-const displayPourcentage = (pos, size) => {
+const displayPourcentage = (isVideo, pos, size) => {
     if (!size || size <= 0) {
         return;
     }
     const percent = `${((pos / size) * 100).toFixed(2)}%`;
     process.stdout.cursorTo(0);
     process.stdout.clearLine(1);
-    process.stdout.write(`\tProgression: ${
-        size === pos ? 'Done\n' : percent
-    }`);
+    process.stdout.write(`\t[${isVideo ? 'Video' : 'Audio'}] Progression: ${
+        size === pos ? 'Done' : percent
+    } (${getDisplaySize(size)})${size === pos ? '\n' : ''}`);
 };
 
-const downloadVideo = (data, index, path) => {
+const downloadPart = (isVideo, elem, path) => new Promise((resolve, reject) => {
+    const file = `${path}/${elem.title}_${isVideo ? 'video' : 'audio'}only.${isVideo ? 'mp4' : 'm4a'}`;
+    const video = ytdl(elem.url, {
+        filter: format => format.container === (isVideo ? 'mp4' : 'm4a'),
+        quality: (isVideo ? 'highestvideo' : 'highestaudio'),
+    });
+    video.on('error', reject);
+    video.on('end', () => resolve(file));
+    video.on('progress', (chunk, downloaded, len) => {
+        displayPourcentage(isVideo, downloaded, len);
+    });
+    video.pipe(fs.createWriteStream(file));
+});
+
+const mergeParts = (videoFile, audioFile, outputFile) => new Promise((resolve, reject) => {
+    spawn('ffmpeg', [
+        '-i', videoFile,
+        '-i', audioFile,
+        '-c', 'copy',
+        outputFile,
+    ]).on('close', (code) => {
+        if (code === 0) {
+            resolve();
+        } else {
+            reject(new Error('Cannot merge video and audio files..'));
+        }
+    });
+});
+
+const downloadVideo = async (data, index, path) => {
     if (index >= data.length) {
         log('Finish downloading all videos!!');
         return;
@@ -82,19 +113,20 @@ const downloadVideo = (data, index, path) => {
     const elem = data[index];
     log(`[${parseInt(index, 10) + 1}/${data.length}] ${elem.title}`);
 
-    const video = ytdl(elem.url);
-    video.on('error', err => log('An error occurs: ', err));
-    video.on('end', () => downloadVideo(data, index + 1, path));
+    try {
+        const videoFile = await downloadPart(true, elem, path);
+        const audioFile = await downloadPart(false, elem, path);
+        const outputFile = `${path}/${elem.title}.mp4`;
+        await mergeParts(videoFile, audioFile, outputFile);
+        log(`Video merged and saved into ${outputFile}`);
 
-    video.on('info', (info) => {
-        video.pipe(fs.createWriteStream(`${path}/${elem.title}.mp4`));
-        log(`\tSize: ${getDisplaySize(info.size, 0)}`);
-        let pos = 0;
-        video.on('data', (chunk) => {
-            pos += chunk.length;
-            displayPourcentage(pos, info.size);
-        });
-    });
+        await fs.unlinkSync(videoFile);
+        await fs.unlinkSync(audioFile);
+        downloadVideo(data, index + 1, path);
+    } catch (err) {
+        log(`An error occurs: ${err}`);
+        downloadVideo(data, index + 1, path);
+    }
 };
 
 (async () => {

@@ -1,2 +1,9 @@
-- Improve quality
-- Save API Key
+Interface
+- Display download speed (actual, average, estimated remaining time)
+
+Download
+- Option to select quality
+
+Merge
+- Use fluent-ffmpeg to merge (https://github.com/fluent-ffmpeg/node-fluent-ffmpeg)
+- Add compression option

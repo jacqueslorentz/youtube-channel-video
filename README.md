@@ -4,6 +4,13 @@ Download all video from a Youtube channel
 
 ## Getting Started
 
+### Prerequisites
+
+ffmpeg and ffprobe must be installed on your system.
+Get them from here: https://ffmpeg.org/
+
+### Installation
+
 Install dependencies with yarn:
 ```
 yarn install
@@ -27,7 +34,7 @@ yarn eslint
 
 ## Built With
 
-* [node-youtube-dl](https://github.com/przemyslawpluta/node-youtube-dl) - youtube-dl driver for node
+* [node-ytdl-core](https://github.com/fent/node-ytdl-core) - youtube downloader in javascript
 * [request-promise](https://github.com/request/request-promise) - simplified HTTP request client
 
 ## License
