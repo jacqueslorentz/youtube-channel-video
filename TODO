@@ -1,9 +1,12 @@
 Interface
-- Display download speed (actual, average, estimated remaining time)
 
 Download
 - Option to select quality
+- Speed very low https://github.com/fent/node-ytdl-core/issues/127
 
 Merge
 - Use fluent-ffmpeg to merge (https://github.com/fluent-ffmpeg/node-fluent-ffmpeg)
 - Add compression option
+
+Bugs
+- Videos name with a '/'

@@ -58,22 +58,37 @@ const getDisplaySize = (size, index) => {
     const i = index || 0;
     const suffixes = ['B', 'KB', 'MB', 'GB'];
 
-    if (size < (i + 1) * 1024) {
+    if (i === suffixes.length - 1 || size < (i + 1) * 1024) {
         return `${size.toFixed(2)} ${suffixes[i]}`;
     }
     return getDisplaySize(size / 1024, i + 1);
 };
 
-const displayPourcentage = (isVideo, pos, size) => {
+const getDisplayTime = (time, index) => {
+    const i = index || 0;
+    const suffixes = ['s', 'min', 'h', ' days'];
+    const mults = [60, 60, 24];
+
+    if (i === suffixes.length - 1 || time < (i + 1) * mults[i]) {
+        return `${time.toFixed(0)}${suffixes[i]}`;
+    }
+    return getDisplayTime(time / mults[i], i + 1);
+};
+
+const displayPourcentage = (isVideo, pos, size, beginTime) => {
     if (!size || size <= 0) {
         return;
     }
+    const speed = pos / ((Date.now() - beginTime) / 1000);
+    const eta = size / speed;
     const percent = `${((pos / size) * 100).toFixed(2)}%`;
     process.stdout.cursorTo(0);
     process.stdout.clearLine(1);
     process.stdout.write(`\t[${isVideo ? 'Video' : 'Audio'}] Progression: ${
         size === pos ? 'Done' : percent
-    } (${getDisplaySize(size)})${size === pos ? '\n' : ''}`);
+    } (${getDisplaySize(size)}) @ ${getDisplaySize(speed)}/s${
+        size === pos ? '\n' : ` (${getDisplayTime(eta)} remaining)`
+    }`);
 };
 
 const downloadPart = (isVideo, elem, path) => new Promise((resolve, reject) => {
@@ -84,8 +99,9 @@ const downloadPart = (isVideo, elem, path) => new Promise((resolve, reject) => {
     });
     video.on('error', reject);
     video.on('end', () => resolve(file));
+    const beginTime = Date.now();
     video.on('progress', (chunk, downloaded, len) => {
-        displayPourcentage(isVideo, downloaded, len);
+        displayPourcentage(isVideo, downloaded, len, beginTime);
     });
     video.pipe(fs.createWriteStream(file));
 });
