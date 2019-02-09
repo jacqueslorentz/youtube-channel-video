@@ -1,8 +1,8 @@
 const rp = require('request-promise');
 const fs = require('fs');
 const ytdl = require('ytdl-core');
-const API_KEY = require('./api-key');
 const { spawn } = require('child_process');
+const API_KEY = require('./api-key');
 
 const API_URL = 'https://www.googleapis.com/youtube/v3';
 const VIDEO_URL = 'https://www.youtube.com/watch?v=';
