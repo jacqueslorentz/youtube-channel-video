@@ -7,7 +7,7 @@ const API_KEY = require('./api-key');
 const API_URL = 'https://www.googleapis.com/youtube/v3';
 const VIDEO_URL = 'https://www.youtube.com/watch?v=';
 
-const log = msg => console.log(msg);
+const log = (msg) => console.log(msg);
 
 const playlistRequest = (playlistId, nextPageToken) => new Promise((resolve) => {
     const params = {
@@ -21,7 +21,7 @@ const playlistRequest = (playlistId, nextPageToken) => new Promise((resolve) => 
         qs: (!nextPageToken ? params : { ...params, ...{ pageToken: nextPageToken } }),
         transform: JSON.parse,
     }).then((res) => {
-        const data = res.items.map(e => ({
+        const data = res.items.map((e) => ({
             title: e.snippet.title.trim(),
             url: VIDEO_URL + e.snippet.resourceId.videoId,
         }));
@@ -40,10 +40,12 @@ const playlistRequest = (playlistId, nextPageToken) => new Promise((resolve) => 
 
 const searchChannel = (channel, isUsername) => new Promise((resolve) => {
     const key = (isUsername ? 'forUsername' : 'id');
+    console.log(`${API_URL}/channels?part=contentDetails,snippet&${key}=${channel}&key=${API_KEY}`);
     rp({
         url: `${API_URL}/channels?part=contentDetails,snippet&${key}=${channel}&key=${API_KEY}`,
         transform: JSON.parse,
     }).then((res) => {
+        console.log(res);
         resolve(res.items.length === 0 ? null : {
             title: res.items[0].snippet.title,
             id: res.items[0].contentDetails.relatedPlaylists.uploads,
@@ -94,7 +96,7 @@ const displayPourcentage = (isVideo, pos, size, beginTime) => {
 const downloadPart = (isVideo, elem, path) => new Promise((resolve, reject) => {
     const file = `${path}/${elem.title}_${isVideo ? 'video' : 'audio'}only.${isVideo ? 'mp4' : 'm4a'}`;
     const video = ytdl(elem.url, {
-        filter: format => format.container === (isVideo ? 'mp4' : 'm4a'),
+        filter: (format) => format.container === (isVideo ? 'mp4' : 'm4a'),
         quality: (isVideo ? 'highestvideo' : 'highestaudio'),
     });
     video.on('error', reject);
